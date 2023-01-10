@@ -122,6 +122,12 @@ class EnergyMeterHandler(object):
             tosend = command
         self._port.write(tosend)
 
+    def clean_out(self,inp):
+        '''
+        gets the usefull data from the query
+        '''
+        return str(inp).strip().replace("\\r\\n'",'').replace("b'",'').split(',')
+
     def get_energy_n(self):
         """
         Reads energy meter
@@ -131,19 +137,18 @@ class EnergyMeterHandler(object):
         """
         self._port.flush()
         time.sleep(0.1)
-        self.sendcmd('CONF:READ:CONT LAST\n'.encode())
-        time.sleep(0.1)
         self.sendcmd('INIT\n'.encode())
         time.sleep(0.1)
         self.sendcmd('FETC:NEXT?\n'.encode())
         time.sleep(0.1)
-        energy = self._readline(11)
+        energy = self._readline(32)
+    
         
 
-        energy = float(str(energy).strip().replace("\\r\\n'",'').replace("b'",''))
-        energy_nj = float(energy / 1e-09)
+        energy = str(energy).strip().replace("\\r\\n'",'').replace("b'",'').split(',')
+        energy_nj = float(energy[0])
         
-        return energy_nj
+        return energy_nj, energy[1], int(energy[2])
 
     def _readline(self, read_bytes=None):
         """
@@ -196,6 +201,7 @@ class EnergyMeterHandler(object):
 
         read_value = None
         try:
+            self._port.reset_input_buffer()
             self.sendcmd(get_command.encode() + '\n'.encode())
         except Exception as e:
             logger.error('Error occured while writing to serial port Error = {0}'.format(e))
@@ -231,6 +237,18 @@ class EnergyMeterHandler(object):
             return 0
         else:
             return em_range
+        
+    def zero(self):
+        self.set_value_energy_meter('CONF:ZERO')
+
+    def get_sensor_type(self):
+            sens_type = self.clean_out(self.get_value_energy_meter('SYST:INF:PROB:TYPE?', 20))[0]
+            return sens_type
+
+    def set_display_mode(self,inp):
+        self.set_value_energy_meter('CONF:DISP:PRI')
+
+            
 
     def is_closed(self):
         if self._port:
