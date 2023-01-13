@@ -172,7 +172,7 @@ class EnergyMeterHandler(object):
             prefix = ' ' + args[0]
             message = args[1]
 
-    def set_value_energy_meter(self, set_command, value=None):
+    def set_value_energy_meter(self, set_command, value=''):
         """
         :param ser_port: energy meter serial port object
         :param set_command: command or property to set
@@ -248,6 +248,19 @@ class EnergyMeterHandler(object):
     def set_display_mode(self,inp):
         self.set_value_energy_meter('CONF:DISP:PRI')
 
+    def check_stat_data(self):
+        a =int(self.clean_out(self.get_value_energy_meter('STAT:FETCH:NREC?', 10))[0])
+        if a>=1:
+            return True
+        else:
+            self.set_value_energy_meter("CONF:STAT:STAR")
+            return False
+        
+    def get_stat_data(self):
+        data = self.clean_out(self.get_value_energy_meter('STAT:FETCH:NEXT?', 80))
+        #return data
+        return [float(x) for x in data]
+       
             
 
     def is_closed(self):
