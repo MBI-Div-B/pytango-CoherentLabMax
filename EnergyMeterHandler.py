@@ -260,8 +260,36 @@ class EnergyMeterHandler(object):
         data = self.clean_out(self.get_value_energy_meter('STAT:FETCH:NEXT?', 80))
         #return data
         return [float(x) for x in data]
-       
-            
+    
+    def get_measurement_mode(self):
+        return self.clean_out(self.get_value_energy_meter('CONF:MEAS?', 10))
+    
+    def get_responsivity(self):
+        
+        return self.clean_out(self.get_value_energy_meter('SYST:INF:PROB:RESP?', 30))[0]
+    
+    def get_head_temp(self):
+        return self.clean_out(self.get_value_energy_meter('SYST:INF:PROB:TEMP?', 30))[0]
+    
+    def get_wavel_corr(self):
+        if self.clean_out(self.get_value_energy_meter('CONF:WAVE:CORR?', 30))[0] =='ON':
+            return True
+        else:
+            return False
+        
+    def get_op_wavel(self):
+        return self.clean_out(self.get_value_energy_meter('CONF:WAVE:WAVE?', 30))[0]            
+
+    def get_current_range(self,min = False):
+        if min is True:
+            return self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL? MIN', 30))[0]
+        return self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL?', 30))[0]
+    def get_auto_range(self):
+        a = self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL?', 30))[0]
+        if a == "ON":
+            return True
+        else:
+            return False
 
     def is_closed(self):
         if self._port:
