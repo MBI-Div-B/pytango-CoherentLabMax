@@ -3,9 +3,7 @@ from tango import AttrWriteType, DevState, AttrWriteType, DispLevel, DebugIt
 from tango.server import Device, attribute, command, device_property
 from enum import IntEnum
 from serial import SerialException
-import importlib
 import math
-importlib.reload(EnergyMeterHandler)
 
 class unit_conv(IntEnum):
     J = 0
