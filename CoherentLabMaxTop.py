@@ -17,10 +17,6 @@ class unit_conv(IntEnum):
     uW = 6
     nW = 7
 
-class sens(IntEnum):
-    Pyroelectric = 0
-    Thermophile = 1
-
 class CoherentLabMaxTop(Device):
     # device properties
     Port = device_property(
@@ -127,8 +123,6 @@ class CoherentLabMaxTop(Device):
         unit= '°C',
         access = AttrWriteType.READ
     )
-    
-
     wavel_corr = attribute(
         label= 'Wavelength Correction',
         dtype= 'DevBoolean',
@@ -162,9 +156,7 @@ class CoherentLabMaxTop(Device):
         self._adj_fact = 1
         self._sensor_type = self.pmSensor.get_sensor_type()
         self.sensor_change()
-        if self._sensor_type == 'PYRO':
-
-            self.info_stream('init?')
+        if self._sensor_type == 'PYRO': #settings for Pyroelectric sensor
             self._unit_adj= unit_conv.J
             self.pmSensor.set_value_energy_meter('CONF:MEAS','J')
             for i in [self.select_range, self.current_range,self.measure_value,self.mean_value,self.std_value,self.min_value,self.max_value]:
@@ -172,20 +164,19 @@ class CoherentLabMaxTop(Device):
         elif self._sensor_type == 'NONE':
             self.set_status('no valid sensor is currently attached')
         else:
-            self.info_stream('init?2')
             self._unit_adj= unit_conv.W
             self.pmSensor.set_value_energy_meter('CONF:MEAS','W')
             for i in [self.select_range, self.current_range,self.measure_value,self.mean_value,self.std_value,self.min_value,self.max_value]:
                 self.change_unit(i,'W')
 
-        for i in range(5):
+        for i in range(5): 
             try:
                 self._select_range = float(self.pmSensor.get_current_range())*0.95
                 break
             except ValueError:
                 pass
     
-
+        #meter setup
         self._responivity = self.pmSensor.get_responsivity()
         self._pulse_period = 1
         self._sample_duration = 100
@@ -201,21 +192,20 @@ class CoherentLabMaxTop(Device):
         self.pmSensor.set_value_energy_meter('CONF:STAT:DISP','MEAN,MIN,MAX,STDV')
         self.pmSensor.set_value_energy_meter('CONF:READ:SEND','PRI,UNIT,PER')
         self.pmSensor.set_value_energy_meter('CONF:READ:CONT','LAST')
-        self.debug_stream(self.pmSensor.get_value_energy_meter('CONF:READ:SEND?',bytes_to_read=10))
+
         self.set_state(DevState.ON)
 
 
     def allways_execute_hook(self):
         self.pmSensor.set_value_energy_meter('STAT:INIT')
 
-    def read_measure_value(self):
-        self._measure_value, measure_unit , self._pulse_period = self.pmSensor.get_energy_n()
-
-        return self._measure_value* self._unit_fact*self._adj_fact
+    
     
 
     def sensor_change(self):
-        self.info_stream('sensor change')
+        '''
+        ajusts Settings according to new sensor
+        '''
         self._sensor_type = self.pmSensor.get_sensor_type()
         if self._sensor_type == 'NONE':
             self.set_status('no valid sensor is currently attached')
@@ -224,7 +214,9 @@ class CoherentLabMaxTop(Device):
         self.sensor_type.set_value(self._sensor_type)
         self._responivity = self.pmSensor.get_responsivity()
         
-        mi= self.pmSensor.get_current_range(min=True)
+
+        #sets the display format according to the range of the new sensor
+        mi = self.pmSensor.get_current_range(min=True)
         self.pmSensor.set_value_energy_meter('CONF:RANG:SEL', str(mi))
         minR = abs(math.floor(math.log10(float(mi*self._unit_fact))))
         for i in [self.select_range, self.current_range]:
@@ -236,12 +228,15 @@ class CoherentLabMaxTop(Device):
             change_prop.format = f"%{minR+5}.{minR+3}f"
             i.set_properties(change_prop)
 
+    def read_measure_value(self):
+        self._measure_value, measure_unit , self._pulse_period = self.pmSensor.get_energy_n()
+
+        return self._measure_value* self._unit_fact*self._adj_fact
     def read_sensor_type(self):
         temp = self.pmSensor.get_sensor_type()
-        if temp !=self._sensor_type: # actions if sensor is changed
+        if temp !=self._sensor_type: # activates if sensor is changed
             self.sensor_change()
-           
-
+        
         return self._sensor_type
     
     def read_pulse_period(self):
@@ -268,11 +263,8 @@ class CoherentLabMaxTop(Device):
         self._sampling_rate = value
 
     def read_mean_value(self):
-        self.debug_stream(str(self.pmSensor.check_stat_data()))
         if self.pmSensor.check_stat_data():
-            self.debug_stream('data aqusition')
             a = self.pmSensor.get_stat_data()
-            self.debug_stream(str(a))
             self._mean_value = a[0]
             self._std_value = a[1]
             self._min_value = a[2]
@@ -280,7 +272,6 @@ class CoherentLabMaxTop(Device):
         else:
             self.set_status('no Statistical data can be aquired')
             
-        
         return self._mean_value* self._unit_fact*self._adj_fact
     def read_std_value(self):
         return self._std_value* self._unit_fact*self._adj_fact
@@ -288,7 +279,6 @@ class CoherentLabMaxTop(Device):
         return self._min_value* self._unit_fact*self._adj_fact
     def read_max_value(self):
         return self._max_value* self._unit_fact*self._adj_fact
-    
     def write_unit_adj(self,inp):
         self._unit_fact = 10**(3*(inp%4))
         for i in [self.measure_value,self.select_range, self.current_range]:
@@ -305,13 +295,9 @@ class CoherentLabMaxTop(Device):
             self.pmSensor.set_value_energy_meter('CONF:MEAS','W')
         self._unit_adj = unit_conv(inp)
 
-
     def read_unit_adj(self):
-        self.debug_stream('in func')
         current = self._unit_adj.name
         fut = self.pmSensor.get_measurement_mode()
-        self.debug_stream(fut[0]+current[-1])
-
         if current[-1] != fut[0]:
             for i in [self.measure_value,self.select_range, self.current_range]:
                 if self._sensor_type == 'PYRO':   
@@ -326,7 +312,6 @@ class CoherentLabMaxTop(Device):
         return  self._unit_adj
 
     def change_unit(self, attr, u):
-        self.info_stream('.')
         change_prop = attr.get_properties()
         change_prop.unit = u
         attr.set_properties(change_prop)
@@ -341,17 +326,13 @@ class CoherentLabMaxTop(Device):
         return self._responivity
     def read_head_temp(self):
         return int(self.pmSensor.get_head_temp())
-
-    
     def read_wavel_corr(self):
-        return self.pmSensor.get_wavel_corr()
-    
+        return self.pmSensor.get_wavel_corr()   
     def write_wavel_corr(self,inp):
         if inp is True:
             self.pmSensor.set_value_energy_meter('CONF:WAVE:CORR','ON')
         else:
             self.pmSensor.set_value_energy_meter('CONF:WAVE:CORR','OFF')
-    
     def read_op_wavel(self):
         return int(self.pmSensor.get_op_wavel())
     
@@ -382,6 +363,8 @@ class CoherentLabMaxTop(Device):
 
     @command()
     def zero(self):
+        '''
+        activates zeroing by the meters of the sensor'''
         if self._sensor_type == "PYRO":
             self.set_staus('zeroing has no effect on Pyroelectric sensors') 
         self.pmSensor.zero()
