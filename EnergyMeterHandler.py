@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
+# Copyright (C) 2020  MBI-Division-B
+# MIT License, refer to LICENSE file
+# Author: Luca Barbera / Email: barbera@mbi-berlin.de
+
+
 import serial
 import time
 
@@ -136,7 +145,7 @@ class EnergyMeterHandler(object):
         if min is True:
             return self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL? MIN', 30))[0]
         return self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL?', 30))[0]
-        
+
     def get_auto_range(self):
         a = self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL?', 30))[0]
         if a == "ON":

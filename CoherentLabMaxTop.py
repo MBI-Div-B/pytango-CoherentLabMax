@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
+# Copyright (C) 2020  MBI-Division-B
+# MIT License, refer to LICENSE file
+# Author: Luca Barbera / Email: barbera@mbi-berlin.de
+
+
 import EnergyMeterHandler
 from tango import AttrWriteType, DevState, DispLevel, DebugIt
 from tango.server import Device, attribute, command, device_property
@@ -278,16 +287,16 @@ class CoherentLabMaxTop(Device):
         else:
             self.set_status('no Statistical data can be aquired')
             
-        return self._mean_value* self._unit_fact*self._adj_fact
+        return self._mean_value * self._unit_fact*self._adj_fact
         
     def read_std_value(self):
-        return self._std_value* self._unit_fact*self._adj_fact
+        return self._std_value * self._unit_fact*self._adj_fact
 
     def read_min_value(self):
-        return self._min_value* self._unit_fact*self._adj_fact
+        return self._min_value * self._unit_fact*self._adj_fact
 
     def read_max_value(self):
-        return self._max_value* self._unit_fact*self._adj_fact
+        return self._max_value * self._unit_fact*self._adj_fact
 
     def write_unit_adj(self, inp):
         self._unit_fact = 10**(3*(inp%4))
@@ -319,7 +328,7 @@ class CoherentLabMaxTop(Device):
             
             self._unit_adj = unit_conv[fut[0]]
             self._unit_fact = 1
-        return  self._unit_adj
+        return self._unit_adj
 
     def change_unit(self, attr, u):
         change_prop = attr.get_properties()
