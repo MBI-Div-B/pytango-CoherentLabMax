@@ -1,6 +1,5 @@
 import serial
-
-
+import time
 
 
 class EnergyMeterHandler(object):
@@ -9,13 +8,15 @@ class EnergyMeterHandler(object):
         self.baud_rate = baud_rate
         self.timeout = timeout
         self.create_serial_port()
+
     def create_serial_port(self):
 
         self._port = serial.Serial(
             port=self.port,
             baudrate=self.baud_rate,
             timeout=self.timeout,
-            xonxoff = True)
+            xonxoff=True)
+
     def sendcmd(self, command, argument=None):
         """
         Send the specified command along with the argument, if any.
@@ -32,7 +33,7 @@ class EnergyMeterHandler(object):
             tosend = command
         self._port.write(tosend)
 
-    def clean_out(self,inp):
+    def clean_out(self, inp):
         '''
         gets the usefull data from the query
         '''
@@ -77,7 +78,6 @@ class EnergyMeterHandler(object):
         """
         self.sendcmd(set_command.encode() + ' '.encode() + value.encode() + '\n'.encode())
 
-
     def get_value_energy_meter(self, get_command, bytes_to_read=1):
         """
         :param ser_port: energy meter serial port object
@@ -95,15 +95,15 @@ class EnergyMeterHandler(object):
         self.set_value_energy_meter('CONF:ZERO')
 
     def get_sensor_type(self):
-            sens_type = self.clean_out(self.get_value_energy_meter('SYST:INF:PROB:TYPE?', 20))[0]
-            return sens_type
+        sens_type = self.clean_out(self.get_value_energy_meter('SYST:INF:PROB:TYPE?', 20))[0]
+        return sens_type
 
-    def set_display_mode(self,inp):
+    def set_display_mode(self, inp):
         self.set_value_energy_meter('CONF:DISP:PRI')
 
     def check_stat_data(self):
-        a =int(self.clean_out(self.get_value_energy_meter('STAT:FETCH:NREC?', 10))[0])
-        if a>=1:
+        a = int(self.clean_out(self.get_value_energy_meter('STAT:FETCH:NREC?', 10))[0])
+        if a >= 1:
             return True
         else:
             self.set_value_energy_meter("CONF:STAT:STAR")
@@ -111,7 +111,6 @@ class EnergyMeterHandler(object):
         
     def get_stat_data(self):
         data = self.clean_out(self.get_value_energy_meter('STAT:FETCH:NEXT?', 80))
-        #return data
         return [float(x) for x in data]
     
     def get_measurement_mode(self):
@@ -133,10 +132,11 @@ class EnergyMeterHandler(object):
     def get_op_wavel(self):
         return self.clean_out(self.get_value_energy_meter('CONF:WAVE:WAVE?', 30))[0]            
 
-    def get_current_range(self,min = False):
+    def get_current_range(self, min=False):
         if min is True:
             return self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL? MIN', 30))[0]
         return self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL?', 30))[0]
+        
     def get_auto_range(self):
         a = self.clean_out(self.get_value_energy_meter('CONF:RANG:SEL?', 30))[0]
         if a == "ON":
