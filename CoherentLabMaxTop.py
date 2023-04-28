@@ -4,7 +4,7 @@
 
 # Copyright (C) 2020  MBI-Division-B
 # MIT License, refer to LICENSE file
-# Author: Luca Barbera / Email: barbera@mbi-berlin.de
+
 
 
 import EnergyMeterHandler
